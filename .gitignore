@@ -4,3 +4,9 @@ __pycache__/
 *.pyc
 .venv/
 .idea/
+
+# 其他练习文件（本地学习用，不上传）
+my_search.py
+benchmark.py
+rerank_bench.py
+rerank_try.py
