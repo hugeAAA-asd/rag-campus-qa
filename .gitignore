@@ -8,7 +8,6 @@ __pycache__/
 # 本地学习文件（不上传）
 my_search.py
 benchmark.py
-rerank_bench.py
 rerank_try.py
 chat_history.json
 corpus.txt
