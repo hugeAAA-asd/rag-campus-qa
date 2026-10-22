@@ -28,18 +28,8 @@
 rag_demo/
 ├── app.py              # Streamlit 网页入口
 ├── rag_core.py         # RAG 核心库：切块/向量化/检索/生成
-├── step1_vector.py     # 练习1：向量相似度入门
-├── step2_build_index.py # 练习2：构建索引
-├── step3_search.py     # 练习3：纯检索测试
-├── step4_ask.py        # 练习4：检索+生成
-├── step5_chat.py       # 练习5：命令行连续问答
-├── benchmark.py        # 检索效果评测
-├── rerank_bench.py     # Rerank 重排序评测
-├── my_search.py        # 手写 search() 练习
-├── corpus.txt          # 小语料（测试用）
 ├── corpus_big.txt      # 完整学生手册语料
-├── index.json          # 向量索引文件
-├── chat_history.json   # 对话历史（自动生成）
+├── index.json          # 向量索引文件（自动生成）
 ├── .env                # 密钥配置（不提交 git）
 └── requirements.txt    # 依赖
 ```
@@ -63,13 +53,7 @@ pip install -r requirements-local.txt  # 本地模型依赖（torch + sentence-t
 DEEPSEEK_API_KEY=sk-你的key
 ```
 
-### 3. 构建索引（首次运行）
-
-```bash
-python step2_build_index.py
-```
-
-### 4. 启动网页版
+### 3. 启动网页版
 
 ```bash
 streamlit run app.py
