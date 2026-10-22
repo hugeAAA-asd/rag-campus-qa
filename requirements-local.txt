@@ -1,0 +1,4 @@
+# 仅在 EMBED_PROVIDER=local（本地模型）时需要，约 750 MB
+# 装法：pip install -r requirements-local.txt
+torch
+sentence-transformers

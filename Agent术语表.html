@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 开发常用术语表</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Microsoft YaHei", sans-serif;
+    background: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    font-size: 28px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #888;
+    margin-bottom: 30px;
+    font-size: 14px;
+  }
+  .section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .section h2 {
+    font-size: 20px;
+    color: #1a1a2e;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eef0f5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .term-card {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f2f5;
+  }
+  .term-card:last-child { border-bottom: none; }
+  .term-name {
+    font-weight: 600;
+    color: #2d3436;
+    font-size: 15px;
+  }
+  .term-en {
+    color: #6c5ce7;
+    font-size: 13px;
+    margin-left: 8px;
+    font-weight: normal;
+  }
+  .term-desc {
+    color: #666;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .qa-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .qa-section h2 {
+    color: #fff;
+    border-bottom-color: rgba(255,255,255,0.2);
+  }
+  .qa-item {
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  .qa-item:last-child { border-bottom: none; }
+  .qa-q {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  .qa-a {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+  .badge {
+    display: inline-block;
+    background: #eef0ff;
+    color: #6c5ce7;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📚 Agent 开发常用术语表</h1>
+  <p class="subtitle">结合 RAG + Function Calling 项目整理 · 面试速查</p>
+
+  <div class="section">
+    <h2>🧠 一、大模型基础</h2>
+    <div class="term-card">
+      <div class="term-name">温度 <span class="term-en">Temperature</span></div>
+      <div class="term-desc">控制输出随机性。越高越发散，越低越确定。文档问答用 0.2~0.3，聊天可以用 0.7</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">Token <span class="term-en">Token</span></div>
+      <div class="term-desc">大模型处理文本的最小单位。中文大概 1 个字 ≈ 1~2 token。输入输出都算钱</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">上下文窗口 <span class="term-en">Context Window</span></div>
+      <div class="term-desc">模型一次能读进去的最大 token 数。超过就会"忘事"，需要裁剪历史消息</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">幻觉 <span class="term-en">Hallucination</span></div>
+      <div class="term-desc">大模型一本正经地编造不存在的事实。RAG 就是用来减少幻觉的核心手段</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">系统提示词 <span class="term-en">System Prompt</span></div>
+      <div class="term-desc">给大模型定角色和规则的那段话，优先级最高，通常放在 messages 第一条</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">推理 / 思维链 <span class="term-en">Reasoning / CoT</span></div>
+      <div class="term-desc">大模型先"想"再答，输出思考过程。比如 DeepSeek-R1 的 reasoning_content</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🤖 二、Function Calling / Agent</h2>
+    <div class="term-card">
+      <div class="term-name">函数调用 <span class="term-en">Function Calling</span></div>
+      <div class="term-desc">大模型判断需要外部数据时，返回要调用哪个函数、传什么参数，由本地代码执行后再把结果喂回模型</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">工具调用 <span class="term-en">Tool Call</span></div>
+      <div class="term-desc">和 Function Calling 一个意思，"工具"是更宽泛的说法（天气、时间、计算器都是工具）</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">工具描述 <span class="term-en">Tool Schema</span></div>
+      <div class="term-desc">告诉大模型有哪些工具、每个工具叫什么、要传什么参数的那段 JSON 定义</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">智能体 <span class="term-en">Agent</span></div>
+      <div class="term-desc">大模型 + 工具 + 循环 = 能自己规划步骤、调用工具完成任务的系统</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">链式调用 <span class="term-en">Chained / Multi-step</span></div>
+      <div class="term-desc">多步任务，模型调完一个工具，根据结果再调下一个，直到任务完成</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">ReAct 模式 <span class="term-en">Reason + Act</span></div>
+      <div class="term-desc">思考→行动→观察→再思考，Agent 的经典循环模式</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">工具选择模式 <span class="term-en">Tool Choice</span></div>
+      <div class="term-desc">auto=模型自己决定要不要调工具；required=必须调；none=不许调</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🔍 三、RAG 检索增强生成</h2>
+    <div class="term-card">
+      <div class="term-name">嵌入 / 向量化 <span class="term-en">Embedding</span></div>
+      <div class="term-desc">把文字变成一串数字（向量），语义相近的文字向量也相近</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">文本分块 <span class="term-en">Chunk</span></div>
+      <div class="term-desc">长文档切成一小段一小段，不然一次塞不进 prompt。中文一般 300~500 字一块</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">重叠 <span class="term-en">Overlap</span></div>
+      <div class="term-desc">相邻两块重叠一部分文字，防止答案正好卡在切口处丢失上下文</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">余弦相似度 <span class="term-en">Cosine Similarity</span></div>
+      <div class="term-desc">两个向量有多像，范围 -1 到 1，越接近 1 表示越相似</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">Top-K <span class="term-en">Top-K</span></div>
+      <div class="term-desc">检索时取相似度最高的 K 段文档，K 越大召回越全但越慢越贵</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">重排序 <span class="term-en">Rerank</span></div>
+      <div class="term-desc">粗检索先召回 10 条，再用更精细的模型重新排序取前 3，大幅提升准确率</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">召回率 <span class="term-en">Recall@K</span></div>
+      <div class="term-desc">正确答案在检索结果前 K 名里出现的比例。比如 recall@1=25/32</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">向量数据库 <span class="term-en">Vector Store</span></div>
+      <div class="term-desc">存所有文档向量的地方，用来快速找相似内容。轻量版可以就是一个 JSON 文件</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>⚙️ 四、工程化相关</h2>
+    <div class="term-card">
+      <div class="term-name">API 密钥 <span class="term-en">API Key</span></div>
+      <div class="term-desc">调用大模型服务的密码，通常以 sk- 开头，要放在 .env 里不能写死在代码中</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">环境变量 <span class="term-en">.env</span></div>
+      <div class="term-desc">把密钥和配置和代码分开管理，代码上传 GitHub 时不会泄露密钥</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">提示词工程 <span class="term-en">Prompt Engineering</span></div>
+      <div class="term-desc">设计 system prompt 和用户输入格式，让大模型更好地完成任务</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">流式输出 <span class="term-en">Streaming</span></div>
+      <div class="term-desc">回答一个字一个字蹦出来，不用等全部生成完再显示，体验更好</div>
+    </div>
+    <div class="term-card">
+      <div class="term-name">延迟 <span class="term-en">Latency</span></div>
+      <div class="term-desc">从用户提问到拿到回答要等多久。本地模型首次加载慢，之后就快了</div>
+    </div>
+  </div>
+
+  <div class="qa-section">
+    <h2>🎯 面试最常问的 5 个问题</h2>
+    <div class="qa-item">
+      <div class="qa-q">Q1: 幻觉是什么？怎么解决？</div>
+      <div class="qa-a">大模型编造不存在的事实。用 RAG 让它基于真实文档回答，加 system prompt 约束"资料里没有就说不知道"。</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q">Q2: Temperature 高了低了有什么区别？</div>
+      <div class="qa-a">高=有创意但容易瞎编，低=稳定但死板。文档问答用 0.2，聊天对话用 0.7。</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q">Q3: RAG 解决什么问题？</div>
+      <div class="qa-a">解决大模型知识过时、不知道私有数据、容易幻觉的问题。先检索私有文档，再让模型基于文档回答。</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q">Q4: Function Calling 流程是什么？</div>
+      <div class="qa-a">告诉模型有哪些工具 → 模型返回要调哪个函数+参数 → 本地执行 → 把结果喂回模型 → 模型总结回答。</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q">Q5: Chunk Size 怎么选？</div>
+      <div class="qa-a">太大检索噪音多，太小上下文不完整。中文一般 300~500 字，overlap 设 10~20%。</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
