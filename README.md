@@ -2,6 +2,10 @@
 
 基于 RAG（检索增强生成）技术实现的校园校规问答系统。不依赖 LangChain，从零手写每一步，方便理解 RAG 原理。
 
+## 🎬 演示视频
+
+👉 [点击观看演示](https://www.bilibili.com/video/BV18mnm6MEHQ/)
+
 ## ✨ 功能特性
 
 - 🔍 **本地 Embedding**：使用 `BAAI/bge-small-zh-v1.5` 本地模型，无需调用远程 Embedding API
