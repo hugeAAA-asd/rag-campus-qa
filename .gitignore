@@ -5,8 +5,16 @@ __pycache__/
 .venv/
 .idea/
 
-# 其他练习文件（本地学习用，不上传）
+# 本地学习文件（不上传）
 my_search.py
 benchmark.py
 rerank_bench.py
 rerank_try.py
+chat_history.json
+corpus.txt
+rag_core.bak
+Agent术语表.html
+Agent术语表.md
+今日总结.md
+学习笔记.md
+学习路线.md
