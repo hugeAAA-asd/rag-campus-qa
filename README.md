@@ -26,12 +26,20 @@
 
 ```
 rag_demo/
-├── app.py              # Streamlit 网页入口
-├── rag_core.py         # RAG 核心库：切块/向量化/检索/生成
-├── corpus_big.txt      # 完整学生手册语料
-├── index.json          # 向量索引文件（自动生成）
-├── .env                # 密钥配置（不提交 git）
-└── requirements.txt    # 依赖
+├── app.py                  # Streamlit 网页入口
+├── rag_core.py             # RAG 核心库：切块 / 向量化 / 检索 / 生成
+├── benchmark.py            # 32 题检索基准，衡量 recall@k
+├── step1_vector.py         # 练习 1：只看向量相似度
+├── step2_build_index.py    # 练习 2：切块 + 建索引
+├── step3_search.py         # 练习 3：只检索不调模型（排错用）
+├── step4_ask.py            # 练习 4：检索 + 生成
+├── step5_chat.py           # 练习 5：连续问答（模型只加载一次）
+├── corpus_big.txt          # 语料：学生手册（约 3700 字，13 块）
+├── index.json              # 向量索引（首次运行生成，不提交）
+├── .env.example            # 配置模板
+├── .env                    # 真实密钥（不提交）
+├── requirements.txt        # 基础依赖
+└── requirements-local.txt  # 本地模型额外依赖
 ```
 
 ## 🚀 快速开始
@@ -53,7 +61,19 @@ pip install -r requirements-local.txt  # 本地模型依赖（torch + sentence-t
 DEEPSEEK_API_KEY=sk-你的key
 ```
 
-### 3. 启动网页版
+### 3. 建索引（首次必须执行）
+
+仓库**不包含** `index.json`——它由语料生成，体积大且可随时重建，所以被 `.gitignore` 排除了。
+
+第一次运行前，必须先建索引：
+
+```bash
+python step2_build_index.py
+```
+
+看到「索引已写入」即成功。**以后只要改了 `corpus_big.txt`，都要重跑这一步。**
+
+### 4. 启动网页版
 
 ```bash
 streamlit run app.py
@@ -63,10 +83,23 @@ streamlit run app.py
 
 ## 📊 检索效果
 
-| 方案 | recall@1 | recall@3 |
+自建 32 题检索基准（`benchmark.py`，覆盖语料全部章节），衡量**检索环节**的 recall@k：
+
+| 配置 | recall@1 | recall@3 |
 |---|---|---|
-| 纯向量检索 | 25/32 | 32/32 |
-| 向量 + Rerank 重排序 | 32/32 | 32/32 |
+| 本地 `bge-small-zh`（512 维） | 25/32 = 78% | 32/32 = 100% |
+| 云端 `bge-m3`（1024 维） | 29/32 = 91% | 32/32 = 100% |
+| 本地 + `bge-reranker-base` 重排 | **32/32 = 100%** | 32/32 = 100% |
+
+**结论**
+
+1. **瓶颈在 embedding 模型的分辨率，不在切块策略**——`chunk_size` 在
+   300 / 400 之间调整时 `recall@1` 无变化（78% → 78%），只是把失败的
+   题目换了一批
+2. **加入 cross-encoder 两阶段重排**后，原本排第 2~3 名的 7 个问题
+   全部被提到第 1 名
+3. 该实验的候选池为 10 / 13 块（占语料 77%），高于真实场景的召回比例，
+   因此提升幅度**不宜直接外推**
 
 ## 💡 示例提问
 

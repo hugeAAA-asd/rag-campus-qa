@@ -7,7 +7,6 @@ __pycache__/
 
 # 本地学习文件（不上传）
 my_search.py
-benchmark.py
 rerank_try.py
 chat_history.json
 corpus.txt
@@ -17,3 +16,4 @@ Agent术语表.md
 今日总结.md
 学习笔记.md
 学习路线.md
+rerank_bench.py

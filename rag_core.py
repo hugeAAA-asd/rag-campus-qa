@@ -10,12 +10,10 @@ import json
 import math
 import os
 import re
-from logging import disable
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
-from huggingface_hub import disable_space_dev_mode
 
 BASE_DIR = Path(__file__).parent
 load_dotenv(BASE_DIR / ".env")

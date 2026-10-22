@@ -12,32 +12,10 @@
     4. 要达到 X% 覆盖率，TOP_K 至少要设多大
 """
 import json
-import os
-from pathlib import Path
-
-import requests
 from collections import Counter
 
-from rag_core import EMBED_API_KEY, INDEX_FILE, TOP_K, cosine, embed_texts
-RERANK_LOCAL_MODEL = "BAAI/bge-reranker-base"
+from rag_core import INDEX_FILE, TOP_K, cosine, embed_texts
 
-
-def _cached_model_dir(repo_id):
-    """在 HF 缓存里找模型快照目录；找不到返回 None。
-
-    直接传目录路径给 CrossEncoder，它就完全不会联网。
-    """
-    home = os.getenv("HF_HOME") or str(Path.home() / ".cache" / "huggingface")
-    snaps = Path(home) / "hub" / ("models--" + repo_id.replace("/", "--")) / "snapshots"
-    if not snaps.is_dir():
-        return None
-    subs = [x for x in snaps.iterdir() if x.is_dir()]
-    return max(subs, key=lambda x: x.stat().st_mtime) if subs else None
-
-
-RERANK_URL = "https://api.siliconflow.cn/v1/rerank"
-RERANK_MODEL = "Qwen/Qwen3-Reranker-0.6B"
-RECALL_K = 10        # 向量先召回几个候选
 # (问题, 答案所在块里必然出现的独特短语)
 TESTS = [
     ("本科最长学习年限是多少年", "最长学习年限为六年"),
@@ -73,30 +51,7 @@ TESTS = [
     ("举办大型活动要提前多久报批", "提前十个工作日提交活动方案"),
     ("什么情况会被开除学籍", "触犯国家法律构成刑事犯罪"),
 ]
-_rerank_model = None
 
-
-def call_rerank(question, documents):
-    """本地 cross-encoder 重排。
-
-    返回 [{"index": i, "relevance_score": s}, ...]，格式和云端 API 一致，
-    所以外面那段 item["index"] 的逻辑不用改。
-    """
-    global _rerank_model
-    if _rerank_model is None:
-        from sentence_transformers import CrossEncoder
-        target = _cached_model_dir(RERANK_LOCAL_MODEL) or RERANK_LOCAL_MODEL
-        if target == RERANK_LOCAL_MODEL:
-            print("  缓存里没找到，将尝试联网下载（需要能访问 hf-mirror）...")
-        else:
-            print("  命中本地缓存，离线加载（不联网）")
-        _rerank_model = CrossEncoder(str(target))
-
-    scores = _rerank_model.predict([(question, d) for d in documents])
-
-    items = [{"index": i, "relevance_score": float(s)} for i, s in enumerate(scores)]
-    items.sort(key=lambda x: x["relevance_score"], reverse=True)
-    return items
 
 def main():
     if not INDEX_FILE.exists():
@@ -112,48 +67,54 @@ def main():
 
     q_vecs = embed_texts([q for q, _ in TESTS], is_query=True)
 
-    vector_ranks = []
-    rerank_ranks = []
+    ranks = []
     for (question, keyword), qv in zip(TESTS, q_vecs):
         scored = sorted(
             ((cosine(qv, c["embedding"]), i) for i, c in enumerate(chunks)),
             key=lambda x: x[0],
             reverse=True,
         )
-        candidates = scored[:RECALL_K]
-        vector_rank = None
-        for pos, (_score, idx) in enumerate(candidates, 1):
+        rank = None
+        for pos, (_score, idx) in enumerate(scored, 1):
             if keyword in chunks[idx]["text"]:
-                vector_rank = pos
+                rank = pos
                 break
-        vector_ranks.append(vector_rank)
+        ranks.append(rank)
 
-        docs = [chunks[idx]["text"] for _s,idx in candidates]
-        results = call_rerank(question, docs)
-
-        rerank_rank = None
-        for pos,item in enumerate(results,1):
-            for pos, item in enumerate(results, 1):
-                block_no = candidates[item["index"]][1]  # 块编号（int）
-                text = chunks[block_no]["text"]  # 用编号取文本
-                if keyword in text:
-                    rerank_rank = pos
-                    break
-                break
-        rerank_ranks.append(rerank_rank)
+        if rank is None:
+            label = "未命中"
+        else:
+            label = f"第{rank}名"
+            if rank > TOP_K:
+                label += " ❌"
+        print(f"  {label:<12} {question}")
 
     print("-" * 68)
-    print(f"  {'方案':<16}{'recall@1':>10}{'recall@3':>10}")
-    for name, rs in (("纯向量", vector_ranks), ("向量+rerank", rerank_ranks)):
-        r1 = sum(1 for r in rs if r and r <= 1)
-        r3 = sum(1 for r in rs if r and r <= 3)
-        print(f"  {name:<16}{r1:>4}/{n:<6}{r3:>4}/{n}")
+    for k in (1, 2, 3, 4, 5, 10):
+        hit = sum(1 for r in ranks if r and r <= k)
+        bar = "#" * hit
+        print(f"  recall@{k:<3} {hit:>2}/{n} = {hit / n:>5.0%}  {bar}")
 
     print("-" * 68)
-    print("  未命中（前 10 里都没有正确答案）：")
-    for name, rs in (("纯向量", vector_ranks), ("向量+rerank", rerank_ranks)):
-        miss = sum(1 for r in rs if not r)
-        print(f"    {name:<16} {miss} 题")
+    print("  排名分布:")
+    dist = Counter(r if r else 999 for r in ranks)
+    for rank in sorted(dist):
+        name = "未命中" if rank == 999 else f"第{rank}名"
+        print(f"    {name:<8} {dist[rank]:>2} 题  {'*' * dist[rank]}")
+
+    print("-" * 68)
+    max_rank = max((r for r in ranks if r), default=0)
+    print("  要达到指定覆盖率，TOP_K 至少需要:")
+    for target in (0.80, 0.90, 0.95, 1.00):
+        need = None
+        for k in range(1, max_rank + 1):
+            if sum(1 for r in ranks if r and r <= k) / n >= target:
+                need = k
+                break
+        if need:
+            print(f"    {target:>4.0%} 覆盖  ->  TOP_K >= {need}")
+        else:
+            print(f"    {target:>4.0%} 覆盖  ->  即使给全部块也达不到")
 
 
 if __name__ == "__main__":
